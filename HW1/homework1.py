@@ -1,19 +1,20 @@
 # Grupo 117 Aprendizagem HomeWork 1
-#Bernardo Castiço ist196845
-#Hugo Rita ist196870
+# Bernardo Castico ist196845
+# Hugo Rita ist196870
 
 
 import math
 import numpy as np
+import statistics
 from sklearn.model_selection import train_test_split
 from sklearn.model_selection import KFold
+from operator import itemgetter
 
-k = 10
-Res = KFold(n_splits = k, random_state = 117, shuffle = True)
+Res = KFold(n_splits=10, random_state=117, shuffle=True)
 
 def getDataToMatrix(lines):
     realLines = []
-    realLines1 = []
+    data = []
     toDelete = []
     for i in range(len(lines)):
         if i > 11:
@@ -30,41 +31,97 @@ def getDataToMatrix(lines):
                 realLines[i][j] = int(realLines[i][j])
     for i in range(len(realLines)):
         if i not in toDelete:
-            realLines1 += [realLines[i]]
-    return realLines1
+            data += [realLines[i]]
+    return data
+
+def knn(data, i, train, k, numberWrongs, numberRights):
+    distances = []
+    lowerIndexes = []
+    for j in train:
+        distance = euclidianDistance(data[i], data[j])
+        distances += [[distance, j]]
+    lowerDistance = getLowerDistance(k, distances)
+    for i in range(len(lowerDistance)):
+        lowerIndexes += [data[lowerDistance[i][1]][-1]]
+    mode = statistics.mode(lowerIndexes)
+    if mode == data[i][-1]:
+        numberRights += 1
+    else:
+        numberWrongs += 1
+    return [numberRights, numberWrongs]
+
+def knn2(data, i, k, numberWrongs, numberRights):
+    distances = []
+    lowerIndexes = []
+    for j in range(len(data)):
+        if j != i:
+            distance = euclidianDistance(data[i], data[j])
+            distances += [[distance, j]]
+    lowerDistance = getLowerDistance(k, distances)
+    for i in range(len(lowerDistance)):
+        lowerIndexes += [data[lowerDistance[i][1]][-1]]
+    mode = statistics.mode(lowerIndexes)
+    if mode == data[i][-1]:
+        numberRights += 1
+    else:
+        numberWrongs += 1
+    return[numberRights, numberWrongs]
+
+
+def kFold1(data, k):
+    results = [0,0]
+    for train, test in Res.split(data):
+        for i in test:
+            resultsAux = knn(data, i, train, k, 0, 0)
+            results[0] += resultsAux[0]
+            results[1] += resultsAux[1]
+    return results
+
+def kFold2(data, k):
+    results = [0,0]
+    for i in range(len(data)):
+        resultsAux = knn2(data, i, k, 0, 0)
+        results[0] += resultsAux[0]
+        results[1] += resultsAux[1]
+    return results
+
 
 def euclidianDistance(ponto1, ponto2):
     distance = 0
-    for i in range(0,9):
-        distance += (ponto1[i] - ponto2[i])**2
+    for i in range(0, 9):
+        distance += (ponto1[i] - ponto2[i]) ** 2
     distance = math.sqrt(distance)
     return distance
 
+
 def getLowerDistance(k, array):
     lower = []
-    n = len(array)
+    array.sort() #sort the list to get the k lower elements
 
-    for i in range(n-1): #sort the list to get the lower elements
-        for j in range(0, n-i-1):
-            if array[j] > array[j + 1] :
-                array[j], array[j + 1] = array[j + 1], array[j]
-    
     for i in range(k):
-        lower += array[i]
+        lower += [array[i]]
     return lower
-
-def knn():
-    a = 1
 
 def main():
     res = []
+    k = eval(input("k: "))
     with open("HW1.txt") as f:
         lines = f.readlines()
     for line in lines:
         tmp = line.split(',')
         res.append(tmp)
-    getDataToMatrix(res)
+    data = getDataToMatrix(res)
 
+    results1 = kFold1(data, k)
 
-if __name__ == '__main__':
-    main()
+    accuracy1 = (results1[0]/(results1[0] + results1[1]))
+
+    print(accuracy1)
+
+    results2 = kFold2(data, k)
+
+    accuracy2 = (results2[0]/(results2[0] + results2[1]))
+
+    print(accuracy2)
+
+main()
