@@ -107,6 +107,72 @@ def euclidianDistance(ponto1, ponto2):
     distance = math.sqrt(distance)
     return distance
 
+def calcProbTrain(train, data):  #This function stores the probabilities from the data set in a matrix, where each line refers to a column
+    probabilities = []
+    malignantCounter = 0
+    benignCounter = 0
+    for k in range(0,9):
+        probabilities += [[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]]
+        for j in range(1,11):
+            for i in train:
+                if data[i][-1] == 0 and data[i][k] == j:  #P(j|Malignant)
+                    probabilities[k][2*(j-1)] += 1
+                elif data[i][-1] == 1 and data[i][k] == j: #P(j|Benign)
+                    probabilities[k][2*(j-1)+1] += 1
+
+    for i in train:
+        if data[i][-1] == 0:
+            malignantCounter += 1
+        else:
+            benignCounter += 1
+
+    for i in range(len(probabilities)):
+        for k in range(len(probabilities[i])):
+            if k % 2 == 0:
+                probabilities[i][k] = probabilities[i][k] / malignantCounter
+            else:
+                probabilities[i][k] = probabilities[i][k] / benignCounter
+    return probabilities
+
+def calculateBayesian(probabilities, index, data, train):
+    n = len(train)
+    probBenign = 0
+    probMalignant = 0
+    for i in train:
+        if data[i][-1] == 0:
+            probMalignant += 1
+        else:
+            probBenign += 1
+    probMalignant = probMalignant/n
+    probBenign = probBenign/n
+
+    #Bayesian probability for class = malignant
+    valueMalignant = probMalignant
+    for k in range(9):
+        valueMalignant *= probabilities[k][2 * data[index][k]-2]
+    #Bayesian probability for class = benign
+    valueBenign = probBenign
+    for k in range(9):
+        valueBenign *= probabilities[k][2 * data[index][k]-1]
+
+    if valueBenign > valueMalignant and data[index][-1] == 1:
+        return [1,0]
+    elif valueMalignant > valueBenign and data[index][-1] == 0:
+        return [1,0]
+    else:
+        return [0,1]
+
+def kFoldEx7(data):
+    result = [0,0]
+    for train, test in Res.split(data):
+        probabilities = calcProbTrain(train, data)
+        for i in test:
+            resultAux = calculateBayesian(probabilities, i, data, train)
+            result[0] += resultAux[0]
+            result[1] += resultAux[1]
+
+    return result
+
 def main():
     res = []
     k = eval(input("k: "))
@@ -117,16 +183,19 @@ def main():
         res.append(tmp)
     data = getDataToMatrix(res)
 
+    # EX 6
     results1 = kFold1(data, k)
-
     accuracy1 = (results1[0]/(results1[0] + results1[1]))
-
     print("accuracy test: " + str(accuracy1))
-
     results2 = kFold2(data, k)
-
     accuracy2 = (results2[0]/(results2[0] + results2[1]))
-
     print("accuracy train: " + str(accuracy2))
+
+    # EX 7
+
+    results3 = kFoldEx7(data)
+    accuracy3 = (results3[0]/(results3[0] + results3[1]))
+    print("accuracy bayes: " + str(accuracy3))
+
 
 main()
