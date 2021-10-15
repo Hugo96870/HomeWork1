@@ -116,12 +116,12 @@ def main():
 
     accuracy1 = (results1[0]/(results1[0] + results1[1]))
 
-    print(accuracy1)
+    print("accuracy test: " + str(accuracy1))
 
     results2 = kFold2(data, k)
 
     accuracy2 = (results2[0]/(results2[0] + results2[1]))
 
-    print(accuracy2)
+    print("accuracy train: " + str(accuracy2))
 
 main()
