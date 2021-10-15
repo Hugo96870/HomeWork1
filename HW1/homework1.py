@@ -35,14 +35,21 @@ def getDataToMatrix(lines):
     return data
 
 def knn(data, i, train, k, numberWrongs, numberRights):
-    distances = []
     lowerIndexes = []
+    kLower = []
     for j in train:
         distance = euclidianDistance(data[i], data[j])
-        distances += [[distance, j]]
-    lowerDistance = getLowerDistance(k, distances)
-    for i in range(len(lowerDistance)):
-        lowerIndexes += [data[lowerDistance[i][1]][-1]]
+        if len(kLower) < k:
+            kLower += [[distance, j]]
+        else:
+            higher = 0
+            for q in range(1,k):
+                if kLower[q][0] > kLower[higher][0]:
+                    higher = q
+            if kLower[higher][0] > distance:
+                kLower[higher] = [distance,j]
+    for q in range(len(kLower)):
+        lowerIndexes += [data[kLower[q][1]][-1]]
     mode = statistics.mode(lowerIndexes)
     if mode == data[i][-1]:
         numberRights += 1
@@ -51,15 +58,22 @@ def knn(data, i, train, k, numberWrongs, numberRights):
     return [numberRights, numberWrongs]
 
 def knn2(data, i, k, numberWrongs, numberRights):
-    distances = []
+    kLower = []
     lowerIndexes = []
     for j in range(len(data)):
         if j != i:
             distance = euclidianDistance(data[i], data[j])
-            distances += [[distance, j]]
-    lowerDistance = getLowerDistance(k, distances)
-    for i in range(len(lowerDistance)):
-        lowerIndexes += [data[lowerDistance[i][1]][-1]]
+            if len(kLower) < k:
+                kLower += [[distance, j]]
+            else:
+                higher = 0
+                for q in range(1, k):
+                    if kLower[q][0] > kLower[higher][0]:
+                        higher = q
+                if kLower[higher][0] >= distance:
+                    kLower[higher] = [distance, j]
+    for q in range(len(kLower)):
+        lowerIndexes += [data[kLower[q][1]][-1]]
     mode = statistics.mode(lowerIndexes)
     if mode == data[i][-1]:
         numberRights += 1
@@ -92,15 +106,6 @@ def euclidianDistance(ponto1, ponto2):
         distance += (ponto1[i] - ponto2[i]) ** 2
     distance = math.sqrt(distance)
     return distance
-
-
-def getLowerDistance(k, array):
-    lower = []
-    array.sort() #sort the list to get the k lower elements
-
-    for i in range(k):
-        lower += [array[i]]
-    return lower
 
 def main():
     res = []
