@@ -10,8 +10,34 @@ from sklearn.model_selection import train_test_split
 from sklearn.model_selection import KFold
 from operator import itemgetter
 from scipy import stats
+from matplotlib.patches import Rectangle
+import matplotlib.pyplot as plt
 
 Res = KFold(n_splits=10, random_state=117, shuffle=True)
+
+#Atributes
+atributes = ["Clump Thickness", "Cell Size Uniformity", "Cell Shape Uniformity", "Marginal Adhesion", "Single Epi Cell Size",
+"Bare Nuclei", "Bland Chromatin", "Normal Nucleoli", "Mitoses"]
+
+#Get data
+
+def getVectors(vector, index):
+    res = []
+    for i in vector:
+        res.append(i[index])
+    return res
+
+def divideData(data):
+    benign = []
+    malignant = []
+
+    for i in data:
+        if i[-1] == 1:
+            benign += [i]
+        else:
+            malignant += [i]
+
+    return [benign, malignant]
 
 def getDataToMatrix(lines):
     realLines = []
@@ -35,15 +61,17 @@ def getDataToMatrix(lines):
             data += [realLines[i]]
     return data
 
+#Exercise 6
+
 def knn(data, i, train, k, numberWrongs, numberRights):
     lowerIndexes = []
-    kLower = []
+    kLower = []  #Stores the k lower euclidian distances in comparison to data[i]
     for j in train:
         distance = euclidianDistance(data[i], data[j])
         if len(kLower) < k:
             kLower += [[distance, j]]
         else:
-            higher = 0
+            higher = 0            #Assume that the first element is the higher
             for q in range(1,k):
                 if kLower[q][0] > kLower[higher][0]:
                     higher = q
@@ -51,7 +79,7 @@ def knn(data, i, train, k, numberWrongs, numberRights):
                 kLower[higher] = [distance,j]
     for q in range(len(kLower)):
         lowerIndexes += [data[kLower[q][1]][-1]]
-    mode = statistics.mode(lowerIndexes)
+    mode = statistics.mode(lowerIndexes)               #Calculates the mode using 
     if mode == data[i][-1]:
         numberRights += 1
     else:
@@ -81,7 +109,6 @@ def knn2(data, i, k, numberWrongs, numberRights):
     else:
         numberWrongs += 1
     return[numberRights, numberWrongs]
-
 
 def kFold1(data, k):
     results = [0,0]
@@ -117,6 +144,8 @@ def euclidianDistance(ponto1, ponto2):
         distance += (ponto1[i] - ponto2[i]) ** 2
     distance = math.sqrt(distance)
     return distance
+
+# EXERCISE 7
 
 def calcProbTrain(train, data):  #This function stores the probabilities from the data set in a matrix, where each line refers to a column
     probabilities = []
@@ -191,11 +220,14 @@ def kFoldEx7(data):
 
     return accuracies3
 
+# MAIN FUNCTION
+
 def main():
     res = []
     accuracy1 = 0
     accuracy2 = 0
     accuracy3 = 0
+    #GET DATA
     k = eval(input("k: "))
     with open("HW1.txt") as f:
         lines = f.readlines()
@@ -203,8 +235,28 @@ def main():
         tmp = line.split(',')
         res.append(tmp)
     data = getDataToMatrix(res)
+    # EXERCISE 5
+    benign, malignant = divideData(data)
+    fig, _ = plt.subplots(nrows=3, ncols=3, figsize=(10, 8))  # creating the histograms
+    fig.tight_layout(pad=4.0)
+    axes = fig.axes #list with the axes
+    fig.canvas.set_window_title('AP HW01 G132')  # Title of histogram
+    colors = ['blue', 'red']
 
-    # EX 6
+    # Titles of histograms
+    for i in range(len(axes)):
+        vectorsBenign = getVectors(benign, i)
+        vectorsMalignant = getVectors(malignant, i)
+        axes[i].title.set_text(atributes[i])
+        axes[i].set_xlabel("Value")
+        axes[i].legend(prop={'size': 9})
+        axes[i].set_ylabel("Counter")
+        axes[i].hist([vectorsBenign, vectorsMalignant], 10, density=False, histtype='bar', color=colors,
+                    label=["Benign", "Malignant"])
+
+    plt.show()
+
+    # EXERCISE 6
     results1 = kFold1(data, k)
     for i in results1[0]:
         accuracy1 += i
@@ -215,7 +267,7 @@ def main():
     print("accuracy test: " + str(accuracy1))
     print("accuracy train: " + str(accuracy2))
 
-    # EX 7
+    # EXERCISE 7
 
     results3 = kFoldEx7(data)
     for i in results3:
@@ -223,7 +275,7 @@ def main():
     accuracy3 /= 10
     print("accuracy bayes: " + str(accuracy3))
 
-    pValue = stats.ttest_ind(np.array(results1[0]), np.array(results3), alternative="greater")
+    pValue = stats.ttest_ind(np.array(results1[0]), np.array(results3), alternative="less")
     print(pValue)
 
 main()
