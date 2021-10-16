@@ -9,6 +9,7 @@ import statistics
 from sklearn.model_selection import train_test_split
 from sklearn.model_selection import KFold
 from operator import itemgetter
+from scipy import stats
 
 Res = KFold(n_splits=10, random_state=117, shuffle=True)
 
@@ -84,21 +85,31 @@ def knn2(data, i, k, numberWrongs, numberRights):
 
 def kFold1(data, k):
     results = [0,0]
+    resultsAux1 = [0,0]
+    accuracies1 = []
+    resultsAux2 = [0,0]
+    accuracies2 = []
     for train, test in Res.split(data):
         for i in test:
             resultsAux = knn(data, i, train, k, 0, 0)
             results[0] += resultsAux[0]
             results[1] += resultsAux[1]
-    return results
+            resultsAux1[0] += resultsAux[0]
+            resultsAux1[1] += resultsAux[1]
+        accuracies1 += [resultsAux1[0]/(resultsAux1[1]+resultsAux1[0])]
+        resultsAux1[0] = 0
+        resultsAux1[1] = 0
+        for i in train:
+            resultsAux = knn2(data, i, k, 0, 0)
+            results[0] += resultsAux[0]
+            results[1] += resultsAux[1]
+            resultsAux2[0] += resultsAux[0]
+            resultsAux2[1] += resultsAux[1]
+        accuracies2 += [resultsAux2[0] / (resultsAux2[1] + resultsAux2[0])]
+        resultsAux2[0] = 0
+        resultsAux2[1] = 0
 
-def kFold2(data, k):
-    results = [0,0]
-    for i in range(len(data)):
-        resultsAux = knn2(data, i, k, 0, 0)
-        results[0] += resultsAux[0]
-        results[1] += resultsAux[1]
-    return results
-
+    return [accuracies1, accuracies2]
 
 def euclidianDistance(ponto1, ponto2):
     distance = 0
@@ -164,17 +175,27 @@ def calculateBayesian(probabilities, index, data, train):
 
 def kFoldEx7(data):
     result = [0,0]
+    accuracies3 = []
+    resultsAux3 = [0,0]
     for train, test in Res.split(data):
         probabilities = calcProbTrain(train, data)
         for i in test:
             resultAux = calculateBayesian(probabilities, i, data, train)
             result[0] += resultAux[0]
             result[1] += resultAux[1]
+            resultsAux3[0] += resultAux[0]
+            resultsAux3[1] += resultAux[1]
+        accuracies3 += [resultsAux3[0]/(resultsAux3[1]+resultsAux3[0])]
+        resultsAux3[0] = 0
+        resultsAux3[1] = 0
 
-    return result
+    return accuracies3
 
 def main():
     res = []
+    accuracy1 = 0
+    accuracy2 = 0
+    accuracy3 = 0
     k = eval(input("k: "))
     with open("HW1.txt") as f:
         lines = f.readlines()
@@ -185,17 +206,24 @@ def main():
 
     # EX 6
     results1 = kFold1(data, k)
-    accuracy1 = (results1[0]/(results1[0] + results1[1]))
+    for i in results1[0]:
+        accuracy1 += i
+    accuracy1 /= 10
+    for i in results1[1]:
+        accuracy2 += i
+    accuracy2 /= 10
     print("accuracy test: " + str(accuracy1))
-    results2 = kFold2(data, k)
-    accuracy2 = (results2[0]/(results2[0] + results2[1]))
     print("accuracy train: " + str(accuracy2))
 
     # EX 7
 
     results3 = kFoldEx7(data)
-    accuracy3 = (results3[0]/(results3[0] + results3[1]))
+    for i in results3:
+        accuracy3 += i
+    accuracy3 /= 10
     print("accuracy bayes: " + str(accuracy3))
 
+    pValue = stats.ttest_ind(np.array(results1[0]), np.array(results3), alternative="greater")
+    print(pValue)
 
 main()
