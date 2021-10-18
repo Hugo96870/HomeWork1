@@ -13,6 +13,7 @@ from scipy import stats
 from matplotlib.patches import Rectangle
 import matplotlib.pyplot as plt
 
+#Res = the 10-fold cross validation with our group number (117)
 Res = KFold(n_splits=10, random_state=117, shuffle=True)
 
 #Atributes
@@ -39,6 +40,7 @@ def divideData(data):
 
     return [benign, malignant]
 
+# function that reads the input file and stores its data to a matrix
 def getDataToMatrix(lines):
     realLines = []
     data = []
@@ -63,6 +65,7 @@ def getDataToMatrix(lines):
 
 #Exercise 6
 
+#function that computes the knn values for the test data
 def knn(data, i, train, k, numberWrongs, numberRights):
     lowerIndexes = []
     kLower = []  #Stores the k lower euclidian distances in comparison to data[i]
@@ -86,6 +89,7 @@ def knn(data, i, train, k, numberWrongs, numberRights):
         numberWrongs += 1
     return [numberRights, numberWrongs]
 
+#function that computes the knn values for the training data
 def knn2(data, i, k, numberWrongs, numberRights):
     kLower = []
     lowerIndexes = []
@@ -110,6 +114,7 @@ def knn2(data, i, k, numberWrongs, numberRights):
         numberWrongs += 1
     return[numberRights, numberWrongs]
 
+#function that does the 10-fold cross validation and calculates accuracies for both datas
 def kFold1(data, k):
     results = [0,0]
     resultsAux1 = [0,0]
@@ -146,6 +151,7 @@ def euclidianDistance(ponto1, ponto2):
     return distance
 
 # EXERCISE 7
+#Auxiliar function that separates the data
 def splitData(list):
     a = []
     b = []
@@ -154,9 +160,8 @@ def splitData(list):
         b.append(i[-1])
     return [a,b]
 
+#Function that computes the naive bayes accuracy
 def naiveCalculate(train, test):
-    train1 = []
-    train2 = []
     accuracy = 0
     test1, test2 = splitData(test)
     train1, train2 = splitData(train)
@@ -202,7 +207,7 @@ def main():
     fig.tight_layout(pad=4.0)
     axes = fig.axes #list with the axes
     fig.canvas.set_window_title('AP HW01 G132')  # Title of histogram
-    colors = ['blue', 'red']
+    colors = ['blue', 'red'] #blue is benign, red is malignant
 
     # Titles of histograms
     for i in range(len(axes)):
