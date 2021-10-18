@@ -8,7 +8,7 @@ import numpy as np
 import statistics
 from sklearn.model_selection import train_test_split
 from sklearn.model_selection import KFold
-from operator import itemgetter
+from sklearn.naive_bayes import MultinomialNB
 from scipy import stats
 from matplotlib.patches import Rectangle
 import matplotlib.pyplot as plt
@@ -79,7 +79,7 @@ def knn(data, i, train, k, numberWrongs, numberRights):
                 kLower[higher] = [distance,j]
     for q in range(len(kLower)):
         lowerIndexes += [data[kLower[q][1]][-1]]
-    mode = statistics.mode(lowerIndexes)               #Calculates the mode using 
+    mode = statistics.mode(lowerIndexes)               #Calculates the mode using
     if mode == data[i][-1]:
         numberRights += 1
     else:
@@ -146,79 +146,40 @@ def euclidianDistance(ponto1, ponto2):
     return distance
 
 # EXERCISE 7
+def splitData(list):
+    a = []
+    b = []
+    for i in list:
+        a.append(i[:-1])
+        b.append(i[-1])
+    return [a,b]
 
-def calcProbTrain(train, data):  #This function stores the probabilities from the data set in a matrix, where each line refers to a column
-    probabilities = []
-    malignantCounter = 0
-    benignCounter = 0
-    for k in range(0,9):
-        probabilities += [[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]]
-        for j in range(1,11):
-            for i in train:
-                if data[i][-1] == 0 and data[i][k] == j:  #P(j|Malignant)
-                    probabilities[k][2*(j-1)] += 1
-                elif data[i][-1] == 1 and data[i][k] == j: #P(j|Benign)
-                    probabilities[k][2*(j-1)+1] += 1
+def naiveCalculate(train, test):
+    train1 = []
+    train2 = []
+    accuracy = 0
+    test1, test2 = splitData(test)
+    train1, train2 = splitData(train)
+    resAux = MultinomialNB()
+    resAux.fit(train1, train2)
+    previsions = resAux.predict(test1)
+    for j in range(len(previsions)):
+        if test2[j] == previsions[j]:
+            accuracy = accuracy + 1
+    finalAccuracy = accuracy/len(test)
+    return finalAccuracy
 
-    for i in train:
-        if data[i][-1] == 0:
-            malignantCounter += 1
-        else:
-            benignCounter += 1
-
-    for i in range(len(probabilities)):
-        for k in range(len(probabilities[i])):
-            if k % 2 == 0:
-                probabilities[i][k] = probabilities[i][k] / malignantCounter
-            else:
-                probabilities[i][k] = probabilities[i][k] / benignCounter
-    return probabilities
-
-def calculateBayesian(probabilities, index, data, train):
-    n = len(train)
-    probBenign = 0
-    probMalignant = 0
-    for i in train:
-        if data[i][-1] == 0:
-            probMalignant += 1
-        else:
-            probBenign += 1
-    probMalignant = probMalignant/n
-    probBenign = probBenign/n
-
-    #Bayesian probability for class = malignant
-    valueMalignant = probMalignant
-    for k in range(9):
-        valueMalignant *= probabilities[k][2 * data[index][k]-2]
-    #Bayesian probability for class = benign
-    valueBenign = probBenign
-    for k in range(9):
-        valueBenign *= probabilities[k][2 * data[index][k]-1]
-
-    if valueBenign > valueMalignant and data[index][-1] == 1:
-        return [1,0]
-    elif valueMalignant > valueBenign and data[index][-1] == 0:
-        return [1,0]
-    else:
-        return [0,1]
-
-def kFoldEx7(data):
-    result = [0,0]
-    accuracies3 = []
-    resultsAux3 = [0,0]
+def naive(data):
+    result = []
+    testData = []
+    trainData = []
     for train, test in Res.split(data):
-        probabilities = calcProbTrain(train, data)
+        for i in train:
+            trainData += [data[i]]
         for i in test:
-            resultAux = calculateBayesian(probabilities, i, data, train)
-            result[0] += resultAux[0]
-            result[1] += resultAux[1]
-            resultsAux3[0] += resultAux[0]
-            resultsAux3[1] += resultAux[1]
-        accuracies3 += [resultsAux3[0]/(resultsAux3[1]+resultsAux3[0])]
-        resultsAux3[0] = 0
-        resultsAux3[1] = 0
-
-    return accuracies3
+            testData += [data[i]]
+        result += [naiveCalculate(trainData, testData)]
+    return result
 
 # MAIN FUNCTION
 
@@ -269,7 +230,7 @@ def main():
 
     # EXERCISE 7
 
-    results3 = kFoldEx7(data)
+    results3 = naive(data)
     for i in results3:
         accuracy3 += i
     accuracy3 /= 10
